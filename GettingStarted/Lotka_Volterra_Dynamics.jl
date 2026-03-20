@@ -1,40 +1,34 @@
-using ModelingToolkit, DifferentialEquations, Plots
+import DifferentialEquations as DE
+import ModelingToolkit as MTK
+import Plots
 
-# Define as variáveis de estado: estado(t) = condição inicial
-@variables t x(t) = 1 y(t) = 1 z(t) = 2
+# Define a variável independente
+@independent_variables t
 
-# Define os parâmetros
-@parameters α = 1.5 β = 1.0 γ = 3.0 δ = 1.0
+# Define as variáveis de estado: state(t) = condição inicial
+@variables x(t)=1 y(t)=1 z(t)
 
-# Define o operador diferencial declarando que a derivação é feita
-# com respeito a t
-d_t = Differential(t)
+# Define os parÂmetros
+@parameters α=1.5 β=1.0 γ=3.0 δ=1.0
 
-# Declara as equações difereniais do modelo
-eqs = [
-    d_t(x) ~ α * x - β * x * y
-    d_t(y) ~ -γ * y + δ * x * y
-    z ~ x + y 
-]
+# Define as equações diferenciais do sistema
+eqs = [D(x) ~ α * x - β * x * y
+       D(y) ~ -γ * y + δ * x * y
+       z ~ x + y]
 
-# Cria o sistema de equações dieferenciais ordinárias
-# considerando a variável t independente
+# Junta as partes do sistema de equações diferenciais (eqs) 
+# usando ODESystem com a variável independente t
+@mtkcompile sys = MTK.ODESystem(eqs, t)
 
-@named sys = ODESystem(eqs, t)
-
-# Realiza a simplificação simbólica do sistema
-simpsys = structural_simplify(sys)
-
-# Transforma o modelo simbólico em um problema numérico
-# para a simulação. 
+# Converte o problema da forma simbólica para a forma numérica
 tspan = (0.0, 10.0)
-prob = ODEProblem(simpsys, [], tspan)
+prob = DE.ODEProblem(sys, [], tspan)
 
-# Resolve o sistema
-sol = solve(prob)
+# Resolve a equação diferencial
+sol = DE.solve(prob)
 
-# Plota a solução
-p1 = plot(sol, title = "Coelhos vs Lobos")
-p2 = plot(sol, idxs = z, title= "Total de animais.")
+# Plota a solução do problema
+p1 = Plots.plot(sol, title = "Coelhos vs Lobos")
+p2 = Plots.plot(sol, idxs = z, title = "Total de Animais")
 
-plot(p1, p2, layout = (2,1))
+Plots.plot(p1, p2, layout = (2, 1))
